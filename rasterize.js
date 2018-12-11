@@ -73,72 +73,72 @@ function loadTriangles() {
       for (var j = 0; j < grid[i].length; j++) {
         if (grid[i][j].occupant == "W") {
           // define front face
+          fLX = ((0 / 50) * 2) - 1; // front left X coord
+          fRX = fLX + .04; // front right X coord
+          fTY = ((((0)/ 50) * 2) - 1) * -1; // front top Y coord -- flip y
+          fBY = fTY - .04; // front bottom Y coord
+          fZ = -.02; // front Z coord
+          bZ = .02; // back Z coord
 
+          cubeCoordArray = cubeCoordArray.concat([
+            // Front face
+            fLX, fBY, fZ,
+            fLX, fTY, fZ,
+            fRX, fTY, fZ,
+            fRX, fBY, fZ,
+
+            // Back face
+            fLX, fBY, bZ,
+            fLX, fTY, bZ,
+            fRX, fTY, bZ,
+            fRX, fBY, bZ,
+
+            // Top face
+            fLX, fTY, fZ,
+            fLX, fTY, bZ,
+            fRX, fTY, bZ,
+            fRX, fTY, fZ,
+
+            // Bottom face
+            fLX, fBY, fZ,
+            fRX, fBY, fZ,
+            fRX, fBY, bZ,
+            fLX, fBY, bZ,
+
+            // Right Face
+            fRX, fBY, fZ,
+            fRX, fTY, fZ,
+            fRX, fTY, bZ,
+            fRX, fBY, bZ,
+
+            // Left Face
+            fLX, fBY, fZ,
+            fLX, fBY, bZ,
+            fLX, fTY, bZ,
+            fLX, fTY, fZ
+          ]);
+          colors = colors.concat([
+            1, 1, 1,    1, 1, 1,
+            1, 1, 1,    1, 1, 1,
+            1, 1, 1,    1, 1, 1,
+            1, 1, 1,    1, 1, 1,
+            1, 1, 1,    1, 1, 1,
+            1, 1, 1,    1, 1, 1
+          ]);
+          l = indices.length;
+          indices = indices.concat([
+            l + 0,  l + 1,  l + 2,      l + 0,  l + 2,  l + 3,    // front
+            l + 4,  l + 5,  l + 6,      l + 4,  l + 6,  l + 7,    // back
+            l + 8,  l + 9,  l + 10,     l + 8,  l + 10, l + 11,   // top
+            l + 12, l + 13, l + 14,     l + 12, l + 14, l + 15,   // bottom
+            l + 16, l + 17, l + 18,     l + 16, l + 18, l + 19,   // right
+            l + 20, l + 21, l + 22,     l + 20, l + 22, l + 23    // left
+          ]);
 
         }
       }
     }
-    fLX = ((0 / 50) * 2) - 1; // front left X coord
-    fRX = fLX + .04; // front right X coord
-    fTY = ((((0 + 1)/ 50) * 2) - 1); // front top Y coord
-    fBY = fTY - .04; // front bottom Y coord
-    fZ = -.02; // front Z coord
-    bZ = .02; // back Z coord
 
-    cubeCoordArray = [
-      // Front face
-      fLX, fBY, fZ,
-      fLX, fTY, fZ,
-      fRX, fTY, fZ,
-      fRX, fBY, fZ,
-
-      // Back face
-      fLX, fBY, bZ,
-      fLX, fTY, bZ,
-      fRX, fTY, bZ,
-      fRX, fBY, bZ,
-
-      // Top face
-      fLX, fTY, fZ,
-      fLX, fTY, bZ,
-      fRX, fTY, bZ,
-      fRX, fTY, fZ,
-
-      // Bottom face
-      fLX, fBY, fZ,
-      fRX, fBY, fZ,
-      fRX, fBY, bZ,
-      fLX, fBY, bZ,
-
-      // Right Face
-      fRX, fBY, fZ,
-      fRX, fTY, fZ,
-      fRX, fTY, bZ,
-      fRX, fBY, bZ,
-
-      // Left Face
-      fLX, fBY, fZ,
-      fLX, fBY, bZ,
-      fLX, fTY, bZ,
-      fLX, fTY, fZ
-    ];
-    colors [
-      1, 1, 1,    1, 1, 1,
-      1, 1, 1,    1, 1, 1,
-      1, 1, 1,    1, 1, 1,
-      1, 1, 1,    1, 1, 1,
-      1, 1, 1,    1, 1, 1,
-      1, 1, 1,    1, 1, 1
-    ];
-
-    indices = [
-      0,  1,  2,      0,  2,  3,    // front
-      4,  5,  6,      4,  6,  7,    // back
-      8,  9,  10,     8,  10, 11,   // top
-      12, 13, 14,     12, 14, 15,   // bottom
-      16, 17, 18,     16, 18, 19,   // right
-      20, 21, 22,     20, 22, 23,   // left
-    ];
     // determine how to calculate
     // get the coords of the front face.
     // build the coords of the others using the front face using front z = .02
@@ -242,7 +242,7 @@ function renderTriangles() {
     gl.vertexAttribPointer(vertexColorAttrib, 1, gl.FLOAT, false, 0,0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffer);
-    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0); // render
+    gl.drawElements(gl.TRIANGLES, triBufferSize, gl.UNSIGNED_SHORT, 0); // render
 } // end render triangles
 
 
