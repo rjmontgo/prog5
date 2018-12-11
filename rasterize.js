@@ -73,54 +73,55 @@ function loadTriangles() {
       for (var j = 0; j < grid[i].length; j++) {
         if (grid[i][j].occupant == "W") {
           // define front face
-          fLX = ((i / 50) * 2) - 1; // front left X coord
-          fRX = fLX + .04; // front right X coord
-          fTY = ((((j + 1)/ 50) * 2) - 1); // front top Y coord
-          fBY = fTY - .04; // front bottom Y coord
-          fZ = -.02; // front Z coord
-          bZ = .02; // back Z coord
 
-          cubeCoordArray = [
-            // Front face
-            fLX, fBY, fZ,
-            fLX, fTY, fZ,
-            fRX, fTY, fZ,
-            fRX, fBY, fZ,
-
-            // Back face
-            fLX, fBY, bZ,
-            fLX, fTY, bZ,
-            fRX, fTY, bZ,
-            fRX, fBY, bZ,
-
-            // Top face
-            fLX, fTY, fZ,
-            fLX, fTY, bZ,
-            fRX, fTY, bZ,
-            fRX, fTY, fZ,
-
-            // Bottom face
-            fLX, fBY, fZ,
-            fRX, fBY, fZ,
-            fRX, fBY, bZ,
-            fLX, fBY, bZ,
-
-            // Right Face
-            fRX, fBY, fZ,
-            fRX, fTY, fZ,
-            fRX, fTY, bZ,
-            fRX, fBY, bZ,
-
-            // Left Face
-            fLX, fBY, fZ,
-            fLX, fBY, bZ,
-            fLX, fTY, bZ,
-            fLX, fTY, fZ
-          ];
 
         }
       }
     }
+    fLX = ((0 / 50) * 2) - 1; // front left X coord
+    fRX = fLX + .04; // front right X coord
+    fTY = ((((0 + 1)/ 50) * 2) - 1); // front top Y coord
+    fBY = fTY - .04; // front bottom Y coord
+    fZ = -.02; // front Z coord
+    bZ = .02; // back Z coord
+
+    cubeCoordArray = [
+      // Front face
+      fLX, fBY, fZ,
+      fLX, fTY, fZ,
+      fRX, fTY, fZ,
+      fRX, fBY, fZ,
+
+      // Back face
+      fLX, fBY, bZ,
+      fLX, fTY, bZ,
+      fRX, fTY, bZ,
+      fRX, fBY, bZ,
+
+      // Top face
+      fLX, fTY, fZ,
+      fLX, fTY, bZ,
+      fRX, fTY, bZ,
+      fRX, fTY, fZ,
+
+      // Bottom face
+      fLX, fBY, fZ,
+      fRX, fBY, fZ,
+      fRX, fBY, bZ,
+      fLX, fBY, bZ,
+
+      // Right Face
+      fRX, fBY, fZ,
+      fRX, fTY, fZ,
+      fRX, fTY, bZ,
+      fRX, fBY, bZ,
+
+      // Left Face
+      fLX, fBY, fZ,
+      fLX, fBY, bZ,
+      fLX, fTY, bZ,
+      fLX, fTY, fZ
+    ];
     colors [
       1, 1, 1,    1, 1, 1,
       1, 1, 1,    1, 1, 1,
@@ -145,7 +146,7 @@ function loadTriangles() {
 
     vertexBuffer = gl.createBuffer(); // init empty vertex coord buffer
     gl.bindBuffer(gl.ARRAY_BUFFER,vertexBuffer); // activate that buffer
-    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(coordArray),gl.STATIC_DRAW); // coords to that buffer
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(cubeCoordArray),gl.STATIC_DRAW); // coords to that buffer
 
     // Create element buffer
     triangleBuffer = gl.createBuffer();
