@@ -4,11 +4,14 @@
 const WIN_Z = 0;  // default graphics window z coord in world space
 const WIN_LEFT = 0; const WIN_RIGHT = 1;  // default left and right x coords in world space
 const WIN_BOTTOM = 0; const WIN_TOP = 1;  // default top and bottom y coords in world space
-var Eye = new vec4.fromValues(0.5,0.5,-0.5,1.0); // default eye position in world space
+var eye = new vec3.fromValues(0 , -1 ,-1.2)
+var up = new vec3.fromValues(0,1,0);
+var lookat = new vec3.fromValues(0,.4,1);
 
 /* webgl globals */
 var gl = null; // the all powerful gl object. It's all here folks!
 var grid;
+var view;
 var vertexBuffer; // this contains vertex coordinates in triples
 var triangleBuffer; // this contains indices into vertexBuffer in triples
 var triBufferSize; // the number of indices in the triangle buffer
@@ -51,6 +54,15 @@ function loadTriangles() {
     var colors = [] // array to hold all the colors
     var cubeCoordArray = [];
     var indices = [];
+
+    var tmp = mat4.create();
+    view = mat4.create();
+    mat4.perspective(tmp, Math.PI/2, gl.canvas.clientWidth / gl.canvas.clientHeight, .1, 100);
+
+    var focus = vec3.fromValues(eye[0] + lookat[0], eye[1] + lookat[1], eye[2] + lookat[2]);
+    var target = mat4.create();
+    mat4.lookAt(target, eye, focus, up);
+    mat4.multiply(view, tmp, mat4.lookAt(target, eye, focus, up));
     // end for each triangle set
     // console.log(coordArray.length);
     // send the vertex coords to webGL
@@ -65,20 +77,24 @@ function loadTriangles() {
         if (i == 0 || j == 0 || i == 49 || j == 49) {
           grid[i][j].occupant = "W";
         }
+        if (i == 24 && j == 24 ) {
+          grid[i][j].occupant = "H";
+        }
       }
     }
 
     // Read grid
+    var incs = 0;
     for (var i = 0; i < grid.length; i++) {
       for (var j = 0; j < grid[i].length; j++) {
         if (grid[i][j].occupant == "W") {
           // define front face
-          fLX = ((0 / 50) * 2) - 1; // front left X coord
+          fLX = ((i / 50) * 2) - 1; // front left X coord
           fRX = fLX + .04; // front right X coord
-          fTY = ((((0)/ 50) * 2) - 1) * -1; // front top Y coord -- flip y
+          fTY = (((j/ 50) * 2) - 1) * -1; // front top Y coord -- flip y
           fBY = fTY - .04; // front bottom Y coord
           fZ = -.02; // front Z coord
-          bZ = .02; // back Z coord
+          bZ = .04; // back Z coord
 
           cubeCoordArray = cubeCoordArray.concat([
             // Front face
@@ -118,14 +134,14 @@ function loadTriangles() {
             fLX, fTY, fZ
           ]);
           colors = colors.concat([
-            1, 1, 1,    1, 1, 1,
-            1, 1, 1,    1, 1, 1,
-            1, 1, 1,    1, 1, 1,
-            1, 1, 1,    1, 1, 1,
-            1, 1, 1,    1, 1, 1,
-            1, 1, 1,    1, 1, 1
+            1, 1, 1, 1,
+            2, 2, 2, 2,
+            2, 2, 2, 2,
+            2, 2, 2, 2,
+            2, 2, 2, 2,
+            2, 2, 2, 2
           ]);
-          l = indices.length;
+          var l = incs * 24;
           indices = indices.concat([
             l + 0,  l + 1,  l + 2,      l + 0,  l + 2,  l + 3,    // front
             l + 4,  l + 5,  l + 6,      l + 4,  l + 6,  l + 7,    // back
@@ -134,8 +150,145 @@ function loadTriangles() {
             l + 16, l + 17, l + 18,     l + 16, l + 18, l + 19,   // right
             l + 20, l + 21, l + 22,     l + 20, l + 22, l + 23    // left
           ]);
+          incs += 1;
 
         }
+
+        if (grid[i][j].occupant == "H") {
+          // define front face
+          fLX = ((i / 50) * 2) - 1; // front left X coord
+          fRX = fLX + .04; // front right X coord
+          fTY = ((((j)/ 50) * 2) - 1) * -1; // front top Y coord -- flip y
+          fBY = fTY - .04; // front bottom Y coord
+          fZ = -.02; // front Z coord
+          bZ = .02; // back Z coord
+
+          console.log(fLX);
+          console.log(fTY);
+
+          cubeCoordArray = cubeCoordArray.concat([
+            // Front face
+            fLX, fBY, fZ,
+            fLX, fTY, fZ,
+            fRX, fTY, fZ,
+            fRX, fBY, fZ,
+
+            // Back face
+            fLX, fBY, bZ,
+            fLX, fTY, bZ,
+            fRX, fTY, bZ,
+            fRX, fBY, bZ,
+
+            // Top face
+            fLX, fTY, fZ,
+            fLX, fTY, bZ,
+            fRX, fTY, bZ,
+            fRX, fTY, fZ,
+
+            // Bottom face
+            fLX, fBY, fZ,
+            fRX, fBY, fZ,
+            fRX, fBY, bZ,
+            fLX, fBY, bZ,
+
+            // Right Face
+            fRX, fBY, fZ,
+            fRX, fTY, fZ,
+            fRX, fTY, bZ,
+            fRX, fBY, bZ,
+
+            // Left Face
+            fLX, fBY, fZ,
+            fLX, fBY, bZ,
+            fLX, fTY, bZ,
+            fLX, fTY, fZ
+          ]);
+          colors = colors.concat([
+            3, 3, 3, 3,
+            4, 4, 4, 4,
+            4, 4, 4, 4,
+            4, 4, 4, 4,
+            4, 4, 4, 4,
+            4, 4, 4, 4
+          ]);
+          var l = incs * 24;
+          indices = indices.concat([
+            l + 0,  l + 1,  l + 2,      l + 0,  l + 2,  l + 3,    // front
+            l + 4,  l + 5,  l + 6,      l + 4,  l + 6,  l + 7,    // back
+            l + 8,  l + 9,  l + 10,     l + 8,  l + 10, l + 11,   // top
+            l + 12, l + 13, l + 14,     l + 12, l + 14, l + 15,   // bottom
+            l + 16, l + 17, l + 18,     l + 16, l + 18, l + 19,   // right
+            l + 20, l + 21, l + 22,     l + 20, l + 22, l + 23    // left
+          ]);
+          incs += 1;
+
+        }
+        /*
+        if (grid[i][j].occupant == "E") {
+          fLX = ((i / 50) * 2) - 1; // front left X coord
+          fRX = fLX + .04; // front right X coord
+          fTY = (((j/ 50) * 2) - 1) * -1; // front top Y coord -- flip y
+          fBY = fTY - .04; // front bottom Y coord
+          fZ = .04; // front Z coord
+          bZ = .05; // back Z coord
+
+          cubeCoordArray = cubeCoordArray.concat([
+            // Front face
+            fLX, fBY, fZ,
+            fLX, fTY, fZ,
+            fRX, fTY, fZ,
+            fRX, fBY, fZ,
+
+            // Back face
+            fLX, fBY, bZ,
+            fLX, fTY, bZ,
+            fRX, fTY, bZ,
+            fRX, fBY, bZ,
+
+            // Top face
+            fLX, fTY, fZ,
+            fLX, fTY, bZ,
+            fRX, fTY, bZ,
+            fRX, fTY, fZ,
+
+            // Bottom face
+            fLX, fBY, fZ,
+            fRX, fBY, fZ,
+            fRX, fBY, bZ,
+            fLX, fBY, bZ,
+
+            // Right Face
+            fRX, fBY, fZ,
+            fRX, fTY, fZ,
+            fRX, fTY, bZ,
+            fRX, fBY, bZ,
+
+            // Left Face
+            fLX, fBY, fZ,
+            fLX, fBY, bZ,
+            fLX, fTY, bZ,
+            fLX, fTY, fZ
+          ]);
+          colors = colors.concat([
+            5, 5, 5, 5,
+            6, 6, 6, 6,
+            6, 6, 6, 6,
+            6, 6, 6, 6,
+            6, 6, 6, 6,
+            6, 6, 6, 6
+          ]);
+          var l = incs * 24;
+          indices = indices.concat([
+            l + 0,  l + 1,  l + 2,      l + 0,  l + 2,  l + 3,    // front
+            l + 4,  l + 5,  l + 6,      l + 4,  l + 6,  l + 7,    // back
+            l + 8,  l + 9,  l + 10,     l + 8,  l + 10, l + 11,   // top
+            l + 12, l + 13, l + 14,     l + 12, l + 14, l + 15,   // bottom
+            l + 16, l + 17, l + 18,     l + 16, l + 18, l + 19,   // right
+            l + 20, l + 21, l + 22,     l + 20, l + 22, l + 23    // left
+          ]);
+          incs += 1;
+        }
+        */
       }
     }
 
@@ -170,7 +323,16 @@ function setupShaders() {
 
         void main(void) {
           if (vColor == 1.0) {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            gl_FragColor = vec4(0.5, 1.0, 1.0, 1.0);
+          }
+          if (vColor == 2.0) {
+            gl_FragColor = vec4(0.5, 0.7, 0.7, 1.0);
+          }
+          if (vColor == 3.0) {
+            gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+          }
+          if (vColor == 4.0) {
+            gl_FragColor = vec4(0.0, 0.5, 0.0, 1.0);
           }
         }
     `;
@@ -179,11 +341,12 @@ function setupShaders() {
     var vShaderCode = `
         attribute vec3 vertexPosition;
         attribute lowp float vertexColor;
+        uniform mat4 view;
 
         varying lowp float vColor;
 
         void main(void) {
-            gl_Position = vec4(vertexPosition, 1.0); // use the untransformed position
+            gl_Position = view * vec4(vertexPosition, 1.0); // use the untransformed position
             vColor = vertexColor;
         }
     `;
@@ -221,6 +384,9 @@ function setupShaders() {
 
                 vertexColorAttrib = gl.getAttribLocation(shaderProgram, "vertexColor");
                 gl.enableVertexAttribArray(vertexColorAttrib);
+
+                var viewLoc = gl.getUniformLocation(shaderProgram, "view");
+                gl.uniformMatrix4fv(viewLoc, false, view);
             } // end if no shader program link errors
         } // end if no compile errors
     } // end try
