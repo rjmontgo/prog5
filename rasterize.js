@@ -853,6 +853,7 @@ function renderTriangles() {
 function main() {
   document.getElementById("infoDiv").style.display = "none";
   document.getElementById("gameDiv").style.display = "block";
+  document.getElementById("score").innerHTML = 0;
   setupWebGL(); // set up the webGL environment
   loadTriangles(); // load in the triangles from tri file
   setupShaders(); //setup the webGL shaders
