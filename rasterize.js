@@ -29,9 +29,29 @@ var npcTail;
 var npcDirection;
 var anim;
 var cont;
+var foodCount;
+var mainSong;
+var gameover;
 
 document.addEventListener('keydown', function(keypress) {
-  lastKeyPress = keypress.key;
+  if (["w", "a", "s", "d"].includes(keypress.key)) {
+    if ((lastKeyPress == "w" && keypress.key != "s") ||
+        (lastKeyPress == "s" && keypress.key != "w") ||
+        (lastKeyPress == "a" && keypress.key != "d") ||
+        (lastKeyPress == "d" && keypress.key != "a")) {
+      lastKeyPress = keypress.key;
+    }
+  }
+  if (keypress.key == "p" && !gameover) {
+    cont = !cont;
+    if (cont) {
+      window.requestAnimationFrame(renderTriangles);
+      mainSong.play();
+    } else {
+      window.cancelAnimationFrame(anim);
+      mainSong.pause();
+    }
+  }
 });
 
 
@@ -113,6 +133,10 @@ function loadTriangles() {
     npcDirection = [0, 1];
     npcHeadCoords = [25, 15];
     cont = true;
+    foodCount = 4;
+    lastKeyPress = "w";
+    gameover = false;
+
 
     var tmp = mat4.create();
     view = mat4.create();
@@ -140,7 +164,7 @@ function loadTriangles() {
         if (i == 25 && (j == 40) ) {
           grid[i][j].occupant = "H";
         }
-        if ((i == 15 || i == 35) || (j == 15 || j == 35)) {
+        if ((i == 15 || i == 35) && (j == 15 || j == 35)) {
           grid[i][j].occupant = "F";
         }
         if ((i == 25) && (j == 15)) {
@@ -148,6 +172,17 @@ function loadTriangles() {
         }
       }
     }
+    setInterval(function() {
+      var num = Math.floor(Math.random() * 8) + 1;
+      while (foodCount < num) {
+        var foodLoc = [Math.floor(Math.random() * 24) + 16,  Math.floor(Math.random() * 24) + 16];
+        while (grid[foodLoc[0]][foodLoc[1]].occupant != "E") {
+          foodLoc = [Math.floor(Math.random() * 24) + 16, Math.floor(Math.random() * 24) + 16];
+        }
+        grid[foodLoc[0]][foodLoc[1]].occupant = "F";
+        foodCount++;
+      }
+    }, 5000);
     updateBuffers();
 
     vertexBuffer = gl.createBuffer(); // init empty vertex coord buffer
@@ -305,6 +340,9 @@ function updateGraph() {
       grid[npX - npDir[0]][npY - npDir[1]].direction = npDir;
       npcTail.push([npX - npDir[0], npY - npDir[1]]);
     }
+    foodCount--;
+    var aud = new Audio('coin.mp3');
+    aud.play();
   } else if (grid[newNX][newNY].occupant == "W" ||
              grid[newNX][newNY].occupant == "T" ||
              grid[newNX][newNY].occupant == "NT" ||
@@ -319,6 +357,8 @@ function updateGraph() {
       npcHeadCoords = [Math.floor(Math.random() * 24) + 16, Math.floor(Math.random() * 24) + 16];
     }
     respawn = true;
+    var aud = new Audio('npcrespawn.mp3');
+    aud.play();
 
   } else {
     if (npcTail.length == 0) {
@@ -394,12 +434,19 @@ function updateGraph() {
       grid[x - dir[0]][y - dir[1]].direction = dir;
       tail.push([x - dir[0], y - dir[1]]);
     }
+    foodCount--;
+    var aud = new Audio('coin.mp3');
+    aud.play();
   } else if (grid[newX][newY].occupant == "W" ||
              grid[newX][newY].occupant == "T" ||
              grid[newX][newY].occupant == "NT" ||
              grid[newX][newY].occupant == "NH") {
     cont = false;
     window.cancelAnimationFrame(anim);
+    gameover = true;
+    var aud = new Audio('gameover.mp3');
+    aud.play();
+    mainSong.pause();
   } else {
     // no collison
     if (tail.length == 0) {
@@ -795,10 +842,13 @@ function renderTriangles() {
 /* MAIN -- HERE is where execution begins after window load */
 
 function main() {
-
+  document.getElementById("infoDiv").style.display = "none";
+  mainSong = new Audio("HolFixPixelParade.mp3");
+  mainSong.play();
   setupWebGL(); // set up the webGL environment
   loadTriangles(); // load in the triangles from tri file
   setupShaders(); //setup the webGL shaders
   renderTriangles(); // draw the triangles using webGL
+
 
 } // end main

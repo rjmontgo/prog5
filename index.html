@@ -3,12 +3,35 @@
     <head>
         <meta charset="UTF-8">
         <title>Prog 5: Snake Game</title>
-            
+
         <script type="text/javascript" src="gl-matrix-min.js"></script>
         <script type="text/javascript" src="rasterize.js"></script>
     </head>
-    
-    <body onload="main();">
+
+    <body>
+      <div id="infoDiv">
+        <p> In the most recent update Chrome attempted to prevent tabs from
+            autoplaying music. I had to add an interaction via mouse-click so
+            that the music will be played properly with the game.
+            <br/> <br />
+            Music Credits: "Pixel Parade" - HolFix (Creative Commons) -
+            <a href="https://www.youtube.com/watch?v=-xpqcOCNHjw">Source</a>
+            <a href="https://www.youtube.com/holfix">Artist</a>
+            <br />
+            Sound Effects: "512 Sound Effects (8-BIT STYLE)" - SubspaceAudio
+            <a href="https://opengameart.org/content/512-sound-effects-8-bit-style">Source</a>
+            <a href="https://juhanijunkala.com/">Artist</a>
+        </p>
+        <input type="button" onclick="main();" value="play"></input>
+        <br>
+      </div>
+      <div id="gameDiv">
         <canvas id="webGLCanvas" width="512" height="512"></canvas>
+        <hr>
+        <b>Controls</b><br>
+        w/a/s/d to move <br>
+        space to pause/resume
+      </div>
+
     </body>
 </html>
