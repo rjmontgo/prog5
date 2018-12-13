@@ -4,9 +4,9 @@
 const WIN_Z = 0;  // default graphics window z coord in world space
 const WIN_LEFT = 0; const WIN_RIGHT = 1;  // default left and right x coords in world space
 const WIN_BOTTOM = 0; const WIN_TOP = 1;  // default top and bottom y coords in world space
-var eye = new vec3.fromValues(0 , -1 ,-1.2)
+var eye = new vec3.fromValues(0 ,-1.1,-1.2)
 var up = new vec3.fromValues(0,1,0);
-var lookat = new vec3.fromValues(0,.4,1);
+var lookat = new vec3.fromValues(0, .5,1);
 
 /* webgl globals */
 var gl = null; // the all powerful gl object. It's all here folks!
@@ -18,11 +18,15 @@ var triBufferSize; // the number of indices in the triangle buffer
 var vertexPositionAttrib; // where to put position for vertex shader
 var vertexColorAttrib; // where to put color for vertex shader
 var lastKeyPress;
-var headCoords;
 var fpsInterval;
 var then;
 var now;
+var headCoords;
 var tail;
+
+var npcHeadCoords;
+var npcTail;
+var npcDirection;
 
 document.addEventListener('keydown', function(keypress) {
   lastKeyPress = keypress.key;
@@ -30,6 +34,41 @@ document.addEventListener('keydown', function(keypress) {
 
 
 // ASSIGNMENT HELPER FUNCTIONS
+/**
+  Used this function to make comparing arrays easier.
+  I did not write this code, but instead used it from stack overflow because
+  I believed it does not represent a core part of the project such as drawing
+  the board/snake or animation. I only used this to compare arrays in a neater way.
+
+  src: https://stackoverflow.com/questions/7837456/how-to-compare-arrays-in-javascript
+ */
+Array.prototype.equals = function(array) {
+  if (array.length != this.length) {
+    return false;
+  }
+  for (var i = 0; i < this.length; i++) {
+    if (!array)
+        return false;
+
+    // compare lengths - can save a lot of time
+    if (this.length != array.length)
+        return false;
+
+    for (var i = 0, l=this.length; i < l; i++) {
+        // Check if we have nested arrays
+        if (this[i] instanceof Array && array[i] instanceof Array) {
+            // recurse into the nested arrays
+            if (!this[i].equals(array[i]))
+                return false;
+        }
+        else if (this[i] != array[i]) {
+            // Warning - two different object instances will never be equal: {x:20} != {x:20}
+            return false;
+        }
+    }
+    return true;
+  }
+}
 
 // set up the webGL environment
 function setupWebGL() {
@@ -68,6 +107,8 @@ function loadTriangles() {
     fpsInterval = 1000 / 5;
     then = Date.now();
     headCoords = [25, 40];
+    npcDirection = [0, 1];
+    npcHeadCoords = [25, 15];
 
     var tmp = mat4.create();
     view = mat4.create();
@@ -98,6 +139,9 @@ function loadTriangles() {
         if ((i == 15 || i == 35) && (j == 15 || j == 35)) {
           grid[i][j].occupant = "F";
         }
+        if ((i == 25) && (j == 15)) {
+          grid[i][j].occupant = "NH";
+        }
       }
     }
     updateBuffers();
@@ -116,6 +160,10 @@ function loadTriangles() {
     colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+}
+
+function collideAndMoveSnake(head, tail, symbol) {
 
 }
 
@@ -148,6 +196,11 @@ function setupShaders() {
           } else if (vColor == 7.0) { // food shadow color
             gl_FragColor = vec4(0.7, 0.0, 0.0, 1.0);
 
+          } else if (vColor == 8.0) { // NPC Snake color
+            gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+
+          } else if (vColor == 9.0) {
+            gl_FragColor = vec4(0.7, 0.0, 0.4, 1.0);
           }
         }
     `;
@@ -210,7 +263,8 @@ function setupShaders() {
         console.log(e);
     } // end catch
 } // end setup shaders
-
+var numTrue = 0;
+var numFalse = 0;
 function updateGraph() {
   var transform;
   //for (var i = 0; i < grid.length; i++) { console.log(grid[i].map(function (elem) { return elem.occupant }).join()); }
@@ -223,25 +277,52 @@ function updateGraph() {
   } else if (lastKeyPress == "d") {
     transform = [-1, 0];
   }
-  // set coords for tail
+
+  // get npc tranform
+  var changeDirectionNPC = Math.floor(Math.random() * 5) < 1;
+  if (changeDirectionNPC) {
+    var direction = [[0, -1],[1, 0],[0, 1],[-1, 0]][Math.floor(Math.random() * 4)];
+    while (direction.equals(npcDirection) || direction.equals(npcDirection.map(function(elem) { return -elem; }))) {
+      direction = [[0, -1],[1, 0],[0, 1],[-1, 0]][Math.floor(Math.random() * 4)];
+    }
+    npcDirection = direction;
+
+  }
+
+  grid[npcHeadCoords[0]][npcHeadCoords[1]].occupant = "E";
+  grid[npcHeadCoords[0] + npcDirection[0]][npcHeadCoords[1] + npcDirection[1]].occupant = "NH";
+  npcHeadCoords = [npcHeadCoords[0] + npcDirection[0], npcHeadCoords[1] + npcDirection[1]];
+
+  // set coords for
+
+  // set direction for tail
   grid[headCoords[0]][headCoords[1]].direction = transform;
+
+  // get new headcoords
   var newX = headCoords[0] + transform[0];
   var newY = headCoords[1] + transform[1];
+
+  // check that npc new coords != reg head coords
 
   // collisions
   if (grid[newX][newY].occupant == "F") {
     // grow tail
     if (tail.length == 0) {
+      var nX = headCoords[0] - transform[0];
+      var nY = headCoords[1] - transform[1];
+      grid[nX][nY].direction = grid[headCoords[0]][headCoords[1]].direction;
       tail.push([headCoords[0] - transform[0], headCoords[1] - transform[1]]);
 
     } else {
       var x = tail[tail.length - 1][0];
       var y = tail[tail.length - 1][1];
       var dir = grid[x][y].direction;
+      grid[x - dir[0]][y - dir[1]].direction = dir;
       tail.push([x - dir[0], y - dir[1]]);
     }
-  } else if (grid[newX][newY].occupant == "T") {
+  } else if (grid[newX][newY].occupant == "T" /* or "W" */) {
     console.log("Fail");
+    // cancel animation
   } else {
     // no collison
     if (tail.length == 0) {
@@ -271,6 +352,7 @@ function updateGraph() {
     }
   }
 
+  // update head
   grid[newX][newY].occupant = "H"
   headCoords[0] = newX;
   headCoords[1] = newY;
@@ -405,6 +487,73 @@ function updateBuffers() {
           4, 4, 4, 4,
           4, 4, 4, 4,
           4, 4, 4, 4
+        ]);
+        var l = incs;
+        indices = indices.concat([
+          l + 0,  l + 1,  l + 2,      l + 0,  l + 2,  l + 3,    // front
+          l + 4,  l + 5,  l + 6,      l + 4,  l + 6,  l + 7,    // back
+          l + 8,  l + 9,  l + 10,     l + 8,  l + 10, l + 11,   // top
+          l + 12, l + 13, l + 14,     l + 12, l + 14, l + 15,   // bottom
+          l + 16, l + 17, l + 18,     l + 16, l + 18, l + 19,   // right
+          l + 20, l + 21, l + 22,     l + 20, l + 22, l + 23    // left
+        ]);
+        incs += 24;
+
+      }
+
+      if (grid[i][j].occupant == "NH"  || grid[i][j].occupant == "NT") {
+        // define front face
+        var fLX = ((i / 50) * 2) - 1; // front left X coord
+        var fRX = fLX + .04; // front right X coord
+        var fTY = ((((j)/ 50) * 2) - 1) * -1; // front top Y coord -- flip y
+        var fBY = fTY - .04; // front bottom Y coord
+        var fZ = -.02; // front Z coord
+        var bZ = .02; // back Z coord
+
+        cubeCoordArray = cubeCoordArray.concat([
+          // Front face
+          fLX, fBY, fZ,
+          fLX, fTY, fZ,
+          fRX, fTY, fZ,
+          fRX, fBY, fZ,
+
+          // Back face
+          fLX, fBY, bZ,
+          fLX, fTY, bZ,
+          fRX, fTY, bZ,
+          fRX, fBY, bZ,
+
+          // Top face
+          fLX, fTY, fZ,
+          fLX, fTY, bZ,
+          fRX, fTY, bZ,
+          fRX, fTY, fZ,
+
+          // Bottom face
+          fLX, fBY, fZ,
+          fRX, fBY, fZ,
+          fRX, fBY, bZ,
+          fLX, fBY, bZ,
+
+          // Right Face
+          fRX, fBY, fZ,
+          fRX, fTY, fZ,
+          fRX, fTY, bZ,
+          fRX, fBY, bZ,
+
+          // Left Face
+          fLX, fBY, fZ,
+          fLX, fBY, bZ,
+          fLX, fTY, bZ,
+          fLX, fTY, fZ
+        ]);
+        colors = colors.concat([
+          8, 8, 8, 8,
+          9, 9, 9, 9,
+          9, 9, 9, 9,
+          9, 9, 9, 9,
+          9, 9, 9, 9,
+          9, 9, 9, 9
         ]);
         var l = incs;
         indices = indices.concat([
