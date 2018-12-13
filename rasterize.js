@@ -27,6 +27,8 @@ var tail;
 var npcHeadCoords;
 var npcTail;
 var npcDirection;
+var anim;
+var cont;
 
 document.addEventListener('keydown', function(keypress) {
   lastKeyPress = keypress.key;
@@ -104,11 +106,13 @@ function loadTriangles() {
     var cubeCoordArray = [];
     var indices = [];
     tail = [];
+    npcTail = [];
     fpsInterval = 1000 / 5;
     then = Date.now();
     headCoords = [25, 40];
     npcDirection = [0, 1];
     npcHeadCoords = [25, 15];
+    cont = true;
 
     var tmp = mat4.create();
     view = mat4.create();
@@ -136,7 +140,7 @@ function loadTriangles() {
         if (i == 25 && (j == 40) ) {
           grid[i][j].occupant = "H";
         }
-        if ((i == 15 || i == 35) && (j == 15 || j == 35)) {
+        if ((i == 15 || i == 35) || (j == 15 || j == 35)) {
           grid[i][j].occupant = "F";
         }
         if ((i == 25) && (j == 15)) {
@@ -266,6 +270,94 @@ function setupShaders() {
 var numTrue = 0;
 var numFalse = 0;
 function updateGraph() {
+  // get npc tranform
+  var changeDirectionNPC = Math.floor(Math.random() * 5) < 1;
+  if (changeDirectionNPC) {
+    var direction = [[0, -1],[1, 0],[0, 1],[-1, 0]][Math.floor(Math.random() * 4)];
+    while (direction.equals(npcDirection) || direction.equals(npcDirection.map(function(elem) { return -elem; }))) {
+      direction = [[0, -1],[1, 0],[0, 1],[-1, 0]][Math.floor(Math.random() * 4)];
+    }
+    npcDirection = direction;
+
+  }
+
+  //grid[npcHeadCoords[0]][npcHeadCoords[1]].occupant = "E";
+  //grid[npcHeadCoords[0] + npcDirection[0]][npcHeadCoords[1] + npcDirection[1]].occupant = "NH";
+  //npcHeadCoords = [npcHeadCoords[0] + npcDirection[0], npcHeadCoords[1] + npcDirection[1]];
+
+  // set direction for npc tail
+  grid[npcHeadCoords[0]][npcHeadCoords[1]].direction = npcDirection;
+
+  // get new npc head coords
+  var newNX = npcHeadCoords[0] + npcDirection[0];
+  var newNY = npcHeadCoords[1] + npcDirection[1];
+  var respawn = false;
+  if (grid[newNX][newNY].occupant == "F") {
+    if (npcTail.length == 0) {
+      var nTX = npcHeadCoords[0] - npcDirection[0];
+      var nTY = npcHeadCoords[1] - npcDirection[1];
+      grid[nTX][nTY].direction = grid[npcHeadCoords[0]][npcHeadCoords[1]].direction;
+      npcTail.push([npcHeadCoords[0] - npcDirection[0], npcHeadCoords[1] - npcDirection[1]]);
+    } else {
+      var npX = npcTail[npcTail.length - 1][0];
+      var npY = npcTail[npcTail.length - 1][1];
+      var npDir = grid[npX][npY].direction;
+      grid[npX - npDir[0]][npY - npDir[1]].direction = npDir;
+      npcTail.push([npX - npDir[0], npY - npDir[1]]);
+    }
+  } else if (grid[newNX][newNY].occupant == "W" ||
+             grid[newNX][newNY].occupant == "T" ||
+             grid[newNX][newNY].occupant == "NT" ||
+             grid[newNX][newNY].occupant == "H") {
+    for (var i = 0; i < npcTail.length; i++) {
+      grid[npcTail[i][0]][npcTail[i][1]].occupant = "E";
+    }
+    npcTail = [];
+    grid[npcHeadCoords[0]][npcHeadCoords[1]].occupant = "E";
+    npcHeadCoords = [Math.floor(Math.random() * 24) + 16,  Math.floor(Math.random() * 24) + 16];
+    while (grid[npcHeadCoords[0]][npcHeadCoords[1]].occupant != "E") {
+      npcHeadCoords = [Math.floor(Math.random() * 24) + 16, Math.floor(Math.random() * 24) + 16];
+    }
+    respawn = true;
+
+  } else {
+    if (npcTail.length == 0) {
+      grid[npcHeadCoords[0]][npcHeadCoords[1]].occupant = "E";
+    }
+  }
+
+
+  // update tail
+  var npcTailEndX;
+  var npcTailEndY;
+  for (var i = 0; i < npcTail.length; i++) {
+    var x = npcTail[i][0];
+    var y = npcTail[i][1];
+    var dir = grid[x][y].direction;
+    npcTail[i][0] = x + dir[0];
+    npcTail[i][1] = y + dir[1];
+    if (i == npcTail.length - 1) {
+      npcTailEndX = x;
+      npcTailEndY = y;
+    }
+  }
+  for (var i = 0; i < npcTail.length; i++) {
+    var x = npcTail[i][0];
+    var y = npcTail[i][1];
+    grid[x][y].occupant = "NT";
+    if (i == npcTail.length - 1) {
+      grid[npcTailEndX][npcTailEndY].occupant = "E";
+    }
+  }
+
+  if (!respawn) {
+    grid[newNX][newNY].occupant = "NH"
+    npcHeadCoords[0] = newNX;
+    npcHeadCoords[1] = newNY;
+  }
+
+ /*****************************/
+
   var transform;
   //for (var i = 0; i < grid.length; i++) { console.log(grid[i].map(function (elem) { return elem.occupant }).join()); }
   if (!lastKeyPress || lastKeyPress == "w") {
@@ -278,23 +370,6 @@ function updateGraph() {
     transform = [-1, 0];
   }
 
-  // get npc tranform
-  var changeDirectionNPC = Math.floor(Math.random() * 5) < 1;
-  if (changeDirectionNPC) {
-    var direction = [[0, -1],[1, 0],[0, 1],[-1, 0]][Math.floor(Math.random() * 4)];
-    while (direction.equals(npcDirection) || direction.equals(npcDirection.map(function(elem) { return -elem; }))) {
-      direction = [[0, -1],[1, 0],[0, 1],[-1, 0]][Math.floor(Math.random() * 4)];
-    }
-    npcDirection = direction;
-
-  }
-
-  grid[npcHeadCoords[0]][npcHeadCoords[1]].occupant = "E";
-  grid[npcHeadCoords[0] + npcDirection[0]][npcHeadCoords[1] + npcDirection[1]].occupant = "NH";
-  npcHeadCoords = [npcHeadCoords[0] + npcDirection[0], npcHeadCoords[1] + npcDirection[1]];
-
-  // set coords for
-
   // set direction for tail
   grid[headCoords[0]][headCoords[1]].direction = transform;
 
@@ -302,7 +377,6 @@ function updateGraph() {
   var newX = headCoords[0] + transform[0];
   var newY = headCoords[1] + transform[1];
 
-  // check that npc new coords != reg head coords
 
   // collisions
   if (grid[newX][newY].occupant == "F") {
@@ -320,9 +394,12 @@ function updateGraph() {
       grid[x - dir[0]][y - dir[1]].direction = dir;
       tail.push([x - dir[0], y - dir[1]]);
     }
-  } else if (grid[newX][newY].occupant == "T" /* or "W" */) {
-    console.log("Fail");
-    // cancel animation
+  } else if (grid[newX][newY].occupant == "W" ||
+             grid[newX][newY].occupant == "T" ||
+             grid[newX][newY].occupant == "NT" ||
+             grid[newX][newY].occupant == "NH") {
+    cont = false;
+    window.cancelAnimationFrame(anim);
   } else {
     // no collison
     if (tail.length == 0) {
@@ -708,7 +785,10 @@ function renderTriangles() {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffer);
     gl.drawElements(gl.TRIANGLES, triBufferSize, gl.UNSIGNED_SHORT, 0); // render
-    window.requestAnimationFrame(renderTriangles);
+
+    if (cont) {
+      anim = window.requestAnimationFrame(renderTriangles);
+    }
 } // end render triangles
 
 
