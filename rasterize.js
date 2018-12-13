@@ -136,6 +136,13 @@ function loadTriangles() {
     foodCount = 4;
     lastKeyPress = "w";
     gameover = false;
+    if (!mainSong) {
+      mainSong = new Audio("HolFixPixelParade.mp3");
+      mainSong.play();
+    } else {
+      mainSong.currentTime = 0;
+      mainSong.play();
+    }
 
 
     var tmp = mat4.create();
@@ -146,9 +153,6 @@ function loadTriangles() {
     var target = mat4.create();
     mat4.lookAt(target, eye, focus, up);
     mat4.multiply(view, tmp, mat4.lookAt(target, eye, focus, up));
-    // end for each triangle set
-    // console.log(coordArray.length);
-    // send the vertex coords to webGL
 
     grid = new Array(50);
     for (var i = 0; i < grid.length; i++) {
@@ -175,9 +179,9 @@ function loadTriangles() {
     setInterval(function() {
       var num = Math.floor(Math.random() * 8) + 1;
       while (foodCount < num) {
-        var foodLoc = [Math.floor(Math.random() * 24) + 16,  Math.floor(Math.random() * 24) + 16];
+        var foodLoc = [Math.floor(Math.random() * 47) + 1,  Math.floor(Math.random() * 47) + 1];
         while (grid[foodLoc[0]][foodLoc[1]].occupant != "E") {
-          foodLoc = [Math.floor(Math.random() * 24) + 16, Math.floor(Math.random() * 24) + 16];
+          foodLoc = [Math.floor(Math.random() * 47) + 16, Math.floor(Math.random() * 47) + 16];
         }
         grid[foodLoc[0]][foodLoc[1]].occupant = "F";
         foodCount++;
@@ -843,8 +847,7 @@ function renderTriangles() {
 
 function main() {
   document.getElementById("infoDiv").style.display = "none";
-  mainSong = new Audio("HolFixPixelParade.mp3");
-  mainSong.play();
+  document.getElementById("gameDiv").style.display = "block";
   setupWebGL(); // set up the webGL environment
   loadTriangles(); // load in the triangles from tri file
   setupShaders(); //setup the webGL shaders

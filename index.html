@@ -25,12 +25,16 @@
         <input type="button" onclick="main();" value="play"></input>
         <br>
       </div>
-      <div id="gameDiv">
+      <div id="gameDiv" style="display:none;">
         <canvas id="webGLCanvas" width="512" height="512"></canvas>
         <hr>
-        <b>Controls</b><br>
-        w/a/s/d to move <br>
-        space to pause/resume
+        <table>
+          <th>Controls</th><th>Misc</th>
+          <tr>
+            <td>w/a/s/d to move <br>p to pause/resume</td>
+            <td><input type="button" onclick="main();" value="Restart"></td>
+          </tr>
+        <table>
       </div>
 
     </body>
