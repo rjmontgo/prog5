@@ -32,14 +32,16 @@ var cont;
 var foodCount;
 var mainSong;
 var gameover;
+var score;
 
 document.addEventListener('keydown', function(keypress) {
-  if (["w", "a", "s", "d"].includes(keypress.key)) {
-    if ((lastKeyPress == "w" && keypress.key != "s") ||
-        (lastKeyPress == "s" && keypress.key != "w") ||
-        (lastKeyPress == "a" && keypress.key != "d") ||
-        (lastKeyPress == "d" && keypress.key != "a")) {
-      lastKeyPress = keypress.key;
+  var nKey = keypress.key
+  if (["w", "a", "s", "d"].includes(nKey)) {
+    if ((lastKeyPress == "w" && nKey != "s") ||
+        (lastKeyPress == "s" && nKey != "w") ||
+        (lastKeyPress == "a" && nKey != "d") ||
+        (lastKeyPress == "d" && nKey != "a")) {
+      lastKeyPress = nKey;
     }
   }
   if (keypress.key == "p" && !gameover) {
@@ -127,6 +129,7 @@ function loadTriangles() {
     var indices = [];
     tail = [];
     npcTail = [];
+    score = 0;
     fpsInterval = 1000 / 5;
     then = Date.now();
     headCoords = [25, 40];
@@ -441,6 +444,8 @@ function updateGraph() {
     foodCount--;
     var aud = new Audio('coin.mp3');
     aud.play();
+    score += 100;
+    document.getElementById("score").innerHTML = score;
   } else if (grid[newX][newY].occupant == "W" ||
              grid[newX][newY].occupant == "T" ||
              grid[newX][newY].occupant == "NT" ||
